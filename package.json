@@ -1,5 +1,5 @@
 {
-  "name": "factorio-rcon-server",
+  "name": "factoriotools-factorio-http-controls",
   "version": "1.0.0",
   "description": "NestJS HTTP server for Factorio RCON management and instance control",
   "author": "Factorio Server",
@@ -16,10 +16,15 @@
   },
   "dependencies": {
     "@nestjs/common": "11.1.6",
+    "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "rcon-client": "^4.2.3",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "zod": "^4.1.8"
   },
   "devDependencies": {
     "@linters/eslint-config-node": "1.13.0",

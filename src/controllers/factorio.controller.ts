@@ -1,98 +1,35 @@
-import { Controller, Get, HttpCode, HttpStatus, Logger } from '@nestjs/common'
-import { RconService } from '../services/rcon/rcon.service'
-import { IRconResponse } from '../services/rcon/rcon.types'
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common'
+import { FactorioRconService } from '../services/factorio-rcon.service'
 
-@Controller('game')
+@Controller('factorio')
 export class FactorioController {
   private readonly logger = new Logger(FactorioController.name)
 
-  constructor(private readonly rconService: RconService) {}
+  constructor(private readonly factorioRconService: FactorioRconService) {}
 
-  @Get('slow')
-  @HttpCode(HttpStatus.OK)
-  async slowGame(): Promise<IRconResponse> {
-    this.logger.log('Executing slow game command')
+  // TODO: implement set server speed to 0.1 (GET endpoint)
 
+  // TODO: implement set server speed to 1 (GET endpoint)
+
+  @Get('time')
+  async getServerTime(): Promise<{ time: string }> {
     try {
-      const result = await this.rconService.executeCommand(
-        '/c game.speed = 0.1'
+      const time = await this.factorioRconService.getServerTime()
+      return { time }
+    } catch (error) {
+      this.logger.error(
+        `Failed to get server time: ${error instanceof Error ? error.message : String(error)}`
       )
-
-      if (result.status === 'success') {
-        return {
-          status: 'success',
-          message: 'Game speed set to 0.1x (slow motion)',
-          details: 'Use /api/game/speed-up to restore normal speed',
-        }
-      }
-
-      return result
-    } catch (error) {
-      this.logger.error(`Unexpected error in slow_game: ${error.message}`)
-
-      return {
-        status: 'error',
-        message: 'Internal error',
-        details: error.message,
-      }
-    }
-  }
-
-  @Get('speed-up')
-  @HttpCode(HttpStatus.OK)
-  async speedUpGame(): Promise<IRconResponse> {
-    this.logger.log('Executing speed up game command')
-
-    try {
-      const result = await this.rconService.executeCommand(
-        '/c game.speed = 1.0'
+      throw new HttpException(
+        'Failed to get server time',
+        HttpStatus.INTERNAL_SERVER_ERROR
       )
-
-      if (result.status === 'success') {
-        return {
-          status: 'success',
-          message: 'Game speed restored to 1.0x (normal speed)',
-          details: 'Players can resume normal gameplay',
-        }
-      }
-
-      return result
-    } catch (error) {
-      this.logger.error(`Unexpected error in speed_up_game: ${error.message}`)
-
-      return {
-        status: 'error',
-        message: 'Internal error',
-        details: error.message,
-      }
-    }
-  }
-
-  @Get('status')
-  @HttpCode(HttpStatus.OK)
-  async getGameStatus(): Promise<IRconResponse> {
-    this.logger.log('Checking game status')
-
-    try {
-      const result = await this.rconService.executeCommand('/time')
-
-      if (result.status === 'success') {
-        return {
-          status: 'success',
-          message: 'Game server is responding',
-          details: result.details,
-        }
-      }
-
-      return result
-    } catch (error) {
-      this.logger.error(`Unexpected error in get_status: ${error.message}`)
-
-      return {
-        status: 'error',
-        message: 'Internal error',
-        details: error.message,
-      }
     }
   }
 }

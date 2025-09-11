@@ -41,14 +41,14 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
 # Create startup script that runs both Factorio and RCON server
-COPY --chown=factorio:factorio startup.sh /opt/rcon-server/
+COPY startup.sh /opt/rcon-server/startup.sh
 RUN chmod +x /opt/rcon-server/startup.sh
 
 # Switch back to factorio user
 USER factorio
 
 # Expose ports
-# 34197/udp: Factorio game port  
+# 34197/udp: Factorio game port
 # 27015/tcp: Factorio RCON port (internal only)
 # 8080/tcp: HTTP API port
 EXPOSE 34197/udp 27015/tcp 8080/tcp

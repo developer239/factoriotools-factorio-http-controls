@@ -1,51 +1,35 @@
-import { Logger } from '@nestjs/common'
+import { Logger, ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
-  const logger = new Logger('Bootstrap')
-
   const app = await NestFactory.create(AppModule)
 
-  // Enable CORS for web requests if needed
-  app.enableCors()
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    })
+  )
 
-  // Global prefix for all routes
-  app.setGlobalPrefix('api')
+  app.enableCors({
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
 
-  const port = process.env.HTTP_PORT || 8080
-
+  const port = process.env.PORT || 8080
   await app.listen(port)
 
-  logger.log(`🚀 Factorio Management Server is running on port ${port}`)
-  logger.log(`📡 Available endpoints (all GET requests):`)
-  logger.log(`   Game Management:`)
-  logger.log(
-    `   GET  http://localhost:${port}/api/game/slow       - Slow game to 0.1x`
+  Logger.log(
+    `🚀 Factorio RCON HTTP Server running on: http://localhost:${port}`
   )
-  logger.log(
-    `   GET  http://localhost:${port}/api/game/speed-up   - Normal speed 1.0x`
-  )
-  logger.log(
-    `   GET  http://localhost:${port}/api/game/status     - Game status`
-  )
-  logger.log(`   Server Management:`)
-  logger.log(
-    `   GET  http://localhost:${port}/api/server/status   - Server status`
-  )
-  logger.log(
-    `   GET  http://localhost:${port}/api/server/start    - Start server`
-  )
-  logger.log(
-    `   GET  http://localhost:${port}/api/server/stop     - Stop server`
-  )
-  logger.log(
-    `💡 All endpoints accessible via browser - no authentication needed!`
-  )
+  Logger.log(`API Endpoints:`)
+  Logger.log(`GET  /factorio/time             - Server time`)
 }
 
-bootstrap().catch((error) => {
-  const logger = new Logger('Bootstrap')
-  logger.error('Failed to start server:', error)
+bootstrap().catch((err) => {
+  Logger.error('Application failed to start', err)
   process.exit(1)
 })
