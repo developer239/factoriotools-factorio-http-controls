@@ -1,9 +1,10 @@
 import { Controller, Get, HttpCode, HttpStatus, Logger } from '@nestjs/common'
-import { IRconResponse, RconService } from '../rcon/rcon.service'
+import { RconService } from '../services/rcon/rcon.service'
+import { IRconResponse } from '../services/rcon/rcon.types'
 
 @Controller('game')
-export class GameController {
-  private readonly logger = new Logger(GameController.name)
+export class FactorioController {
+  private readonly logger = new Logger(FactorioController.name)
 
   constructor(private readonly rconService: RconService) {}
 
