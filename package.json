@@ -1,0 +1,45 @@
+{
+  "name": "factorio-rcon-server",
+  "version": "1.0.0",
+  "description": "NestJS HTTP server for Factorio RCON management and instance control",
+  "author": "Factorio Server",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google-cloud/compute": "^6.3.0",
+    "@nestjs/common": "11.1.6",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.6",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@linters/eslint-config-node": "1.13.0",
+    "@linters/eslint-config-typescript": "1.20.0",
+    "@linters/eslint-config-vitest": "0.2.0",
+    "@linters/prettier-config": "^1.4.1",
+    "@nestjs/cli": "^11.0.10",
+    "@nestjs/schematics": "^11.0.7",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.1",
+    "eslint": "8.57.0",
+    "eslint-config-prettier": "9.1.0",
+    "prettier": "^3.0.0",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.1.0",
+    "ts-loader": "^9.4.3",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.1.3"
+  }
+}
