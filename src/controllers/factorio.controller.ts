@@ -13,10 +13,6 @@ export class FactorioController {
 
   constructor(private readonly factorioRconService: FactorioRconService) {}
 
-  // TODO: implement set server speed to 0.1 (GET endpoint)
-
-  // TODO: implement set server speed to 1 (GET endpoint)
-
   @Get('time')
   async getServerTime(): Promise<{ time: string }> {
     try {
@@ -28,6 +24,111 @@ export class FactorioController {
       )
       throw new HttpException(
         'Failed to get server time',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
+  }
+
+  @Get('speed/slow')
+  async setSlowSpeed(): Promise<{ message: string; speed: string }> {
+    try {
+      await this.factorioRconService.executeCommand('/c game.speed = 0.1')
+      return {
+        message: 'Server speed set to 0.1x',
+        speed: '0.1',
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to set slow speed: ${error instanceof Error ? error.message : String(error)}`
+      )
+      throw new HttpException(
+        'Failed to set server speed',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
+  }
+
+  @Get('speed/normal')
+  async setNormalSpeed(): Promise<{ message: string; speed: string }> {
+    try {
+      await this.factorioRconService.executeCommand('/c game.speed = 1')
+      return {
+        message: 'Server speed set to 1x (normal)',
+        speed: '1',
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to set normal speed: ${error instanceof Error ? error.message : String(error)}`
+      )
+      throw new HttpException(
+        'Failed to set server speed',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
+  }
+
+  @Get('speed/fast')
+  async setFastSpeed(): Promise<{ message: string; speed: string }> {
+    try {
+      await this.factorioRconService.executeCommand('/c game.speed = 2')
+      return {
+        message: 'Server speed set to 2x (fast)',
+        speed: '2',
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to set fast speed: ${error instanceof Error ? error.message : String(error)}`
+      )
+      throw new HttpException(
+        'Failed to set server speed',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
+  }
+
+  @Get('pause')
+  async pauseGame(): Promise<{ message: string }> {
+    try {
+      await this.factorioRconService.executeCommand('/pause')
+      return { message: 'Game paused' }
+    } catch (error) {
+      this.logger.error(
+        `Failed to pause game: ${error instanceof Error ? error.message : String(error)}`
+      )
+      throw new HttpException(
+        'Failed to pause game',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
+  }
+
+  @Get('unpause')
+  async unpauseGame(): Promise<{ message: string }> {
+    try {
+      await this.factorioRconService.executeCommand('/unpause')
+      return { message: 'Game unpaused' }
+    } catch (error) {
+      this.logger.error(
+        `Failed to unpause game: ${error instanceof Error ? error.message : String(error)}`
+      )
+      throw new HttpException(
+        'Failed to unpause game',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
+  }
+
+  @Get('status')
+  async getServerStatus(): Promise<{ status: string }> {
+    try {
+      const status = await this.factorioRconService.executeCommand('/players')
+      return { status }
+    } catch (error) {
+      this.logger.error(
+        `Failed to get server status: ${error instanceof Error ? error.message : String(error)}`
+      )
+      throw new HttpException(
+        'Failed to get server status',
         HttpStatus.INTERNAL_SERVER_ERROR
       )
     }

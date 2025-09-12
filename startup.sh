@@ -10,10 +10,14 @@ export FACTORIO_RCON_PASSWORD=${FACTORIO_RCON_PASSWORD:-factorio}
 export FACTORIO_SAVE_NAME=${FACTORIO_SAVE_NAME:-default}
 export PORT=${PORT:-8080}
 
+# Set Factorio game server port (separate from HTTP API port)
+export FACTORIO_PORT=34197
+
 echo "Configuration:"
 echo "RCON Host: $FACTORIO_RCON_HOST"
 echo "RCON Port: $FACTORIO_RCON_PORT"
-echo "HTTP Port: $PORT"
+echo "HTTP API Port: $PORT"
+echo "Factorio Game Port: $FACTORIO_PORT"
 echo "Save Name: $FACTORIO_SAVE_NAME"
 
 # Function to start Factorio server
@@ -22,6 +26,11 @@ start_factorio() {
 
     # Ensure save directory exists
     mkdir -p /factorio/saves
+    mkdir -p /factorio/config
+    mkdir -p /factorio/mods
+
+    # Set PORT environment variable for Factorio game server
+    export PORT=$FACTORIO_PORT
 
     # Start Factorio server with RCON enabled
     /docker-entrypoint.sh \
