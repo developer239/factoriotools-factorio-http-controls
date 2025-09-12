@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpException,
@@ -8,7 +9,6 @@ import {
   Post,
   UploadedFile,
   UseInterceptors,
-  Body,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { FactorioRconService } from '../services/factorio-rcon.service'
@@ -19,108 +19,54 @@ export class FactorioController {
 
   constructor(private readonly factorioRconService: FactorioRconService) {}
 
+  private handleError(operation: string, error: unknown): never {
+    const message = error instanceof Error ? error.message : String(error)
+    this.logger.error(`${operation}: ${message}`)
+    throw new HttpException(operation, HttpStatus.INTERNAL_SERVER_ERROR)
+  }
+
   @Get('time')
   async getServerTime(): Promise<{ time: string }> {
     try {
       const time = await this.factorioRconService.getServerTime()
       return { time }
     } catch (error) {
-      this.logger.error(
-        `Failed to get server time: ${error instanceof Error ? error.message : String(error)}`
-      )
-      throw new HttpException(
-        'Failed to get server time',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
+      this.handleError('Failed to get server time', error)
     }
   }
 
-  @Get('speed/slow')
-  async setSlowSpeed(): Promise<{ message: string; speed: string }> {
-    try {
-      await this.factorioRconService.executeCommand('/c game.speed = 0.1')
-      return {
-        message: 'Server speed set to 0.1x',
-        speed: '0.1',
-      }
-    } catch (error) {
-      this.logger.error(
-        `Failed to set slow speed: ${error instanceof Error ? error.message : String(error)}`
-      )
-      throw new HttpException(
-        'Failed to set server speed',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
-    }
+  @Post('speed/slow')
+  setSlowSpeed(): Promise<{ message: string; speed: string }> {
+    return this.setSpeed('slow')
   }
 
-  @Get('speed/normal')
-  async setNormalSpeed(): Promise<{ message: string; speed: string }> {
-    try {
-      await this.factorioRconService.executeCommand('/c game.speed = 1')
-      return {
-        message: 'Server speed set to 1x (normal)',
-        speed: '1',
-      }
-    } catch (error) {
-      this.logger.error(
-        `Failed to set normal speed: ${error instanceof Error ? error.message : String(error)}`
-      )
-      throw new HttpException(
-        'Failed to set server speed',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
-    }
+  @Post('speed/normal')
+  setNormalSpeed(): Promise<{ message: string; speed: string }> {
+    return this.setSpeed('normal')
   }
 
-  @Get('speed/fast')
-  async setFastSpeed(): Promise<{ message: string; speed: string }> {
-    try {
-      await this.factorioRconService.executeCommand('/c game.speed = 2')
-      return {
-        message: 'Server speed set to 2x (fast)',
-        speed: '2',
-      }
-    } catch (error) {
-      this.logger.error(
-        `Failed to set fast speed: ${error instanceof Error ? error.message : String(error)}`
-      )
-      throw new HttpException(
-        'Failed to set server speed',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
-    }
+  @Post('speed/fast')
+  setFastSpeed(): Promise<{ message: string; speed: string }> {
+    return this.setSpeed('fast')
   }
 
-  @Get('pause')
+  @Post('pause')
   async pauseGame(): Promise<{ message: string }> {
     try {
       await this.factorioRconService.executeCommand('/pause')
       return { message: 'Game paused' }
     } catch (error) {
-      this.logger.error(
-        `Failed to pause game: ${error instanceof Error ? error.message : String(error)}`
-      )
-      throw new HttpException(
-        'Failed to pause game',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
+      this.handleError('Failed to pause game', error)
     }
   }
 
-  @Get('unpause')
+  @Post('unpause')
   async unpauseGame(): Promise<{ message: string }> {
     try {
       await this.factorioRconService.executeCommand('/unpause')
       return { message: 'Game unpaused' }
     } catch (error) {
-      this.logger.error(
-        `Failed to unpause game: ${error instanceof Error ? error.message : String(error)}`
-      )
-      throw new HttpException(
-        'Failed to unpause game',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
+      this.handleError('Failed to unpause game', error)
     }
   }
 
@@ -130,13 +76,7 @@ export class FactorioController {
       const status = await this.factorioRconService.executeCommand('/players')
       return { status }
     } catch (error) {
-      this.logger.error(
-        `Failed to get server status: ${error instanceof Error ? error.message : String(error)}`
-      )
-      throw new HttpException(
-        'Failed to get server status',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
+      this.handleError('Failed to get server status', error)
     }
   }
 
@@ -149,13 +89,7 @@ export class FactorioController {
         result: result.trim(),
       }
     } catch (error) {
-      this.logger.error(
-        `Failed to trigger save: ${error instanceof Error ? error.message : String(error)}`
-      )
-      throw new HttpException(
-        'Failed to trigger save',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
+      this.handleError('Failed to trigger save', error)
     }
   }
 
@@ -166,8 +100,6 @@ export class FactorioController {
   }> {
     try {
       const saves = await this.factorioRconService.listSaves()
-
-      // Convert dates to ISO strings for JSON response
       const formattedSaves = saves.map((save) => ({
         name: save.name,
         size: save.size,
@@ -179,13 +111,7 @@ export class FactorioController {
         saves: formattedSaves,
       }
     } catch (error) {
-      this.logger.error(
-        `Failed to list saves: ${error instanceof Error ? error.message : String(error)}`
-      )
-      throw new HttpException(
-        'Failed to list save files',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
+      this.handleError('Failed to list save files', error)
     }
   }
 
@@ -201,13 +127,7 @@ export class FactorioController {
         result: result.trim(),
       }
     } catch (error) {
-      this.logger.error(
-        `Failed to load save '${filename}': ${error instanceof Error ? error.message : String(error)}`
-      )
-      throw new HttpException(
-        'Failed to load save',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
+      this.handleError(`Failed to load save '${filename}'`, error)
     }
   }
 
@@ -217,12 +137,9 @@ export class FactorioController {
       limits: {
         fileSize: 500 * 1024 * 1024, // 500MB max file size
       },
-      fileFilter: (req, file, callback) => {
+      fileFilter: (_, file, callback) => {
         if (!file.originalname.toLowerCase().endsWith('.zip')) {
-          return callback(
-            new Error('Only .zip save files are allowed'),
-            false
-          )
+          return callback(new Error('Only .zip save files are allowed'), false)
         }
         callback(null, true)
       },
@@ -246,7 +163,7 @@ export class FactorioController {
 
     try {
       const shouldAutoLoad = autoLoad === 'true' || autoLoad === '1'
-      
+
       this.logger.log(
         `Processing uploaded save file: ${file.originalname} (${file.size} bytes)${shouldAutoLoad ? ' with auto-load' : ''}`
       )
@@ -264,13 +181,38 @@ export class FactorioController {
         loadResult: result.loadResult,
       }
     } catch (error) {
-      this.logger.error(
-        `Failed to upload save file '${file?.originalname}': ${error instanceof Error ? error.message : String(error)}`
+      this.handleError(
+        `Failed to upload save file '${file?.originalname}'`,
+        error
       )
+    }
+  }
+
+  private async setSpeed(
+    @Param('multiplier') multiplier: string
+  ): Promise<{ message: string; speed: string }> {
+    const speedMap = {
+      slow: '0.1',
+      normal: '1',
+      fast: '2',
+    }
+
+    if (!(multiplier in speedMap)) {
       throw new HttpException(
-        `Failed to upload save file: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        'Invalid speed multiplier. Use: slow, normal, fast',
+        HttpStatus.BAD_REQUEST
       )
+    }
+
+    try {
+      const speed = speedMap[multiplier as keyof typeof speedMap]
+      await this.factorioRconService.executeCommand(`/c game.speed = ${speed}`)
+      return {
+        message: `Server speed set to ${speed}x${multiplier === 'normal' ? ' (normal)' : ''}`,
+        speed,
+      }
+    } catch (error) {
+      this.handleError('Failed to set server speed', error)
     }
   }
 }

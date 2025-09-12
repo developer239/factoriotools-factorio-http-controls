@@ -22,21 +22,7 @@ async function bootstrap() {
   const port = process.env.PORT || 8080
   await app.listen(port)
 
-  Logger.log(
-    `🚀 Factorio RCON HTTP Server running on: http://localhost:${port}`
-  )
-  Logger.log(`API Endpoints:`)
-  Logger.log(`GET /factorio/time             - Server time`)
-  Logger.log(`GET /factorio/speed/slow       - Set server speed to 0.1x`)
-  Logger.log(`GET /factorio/speed/normal     - Set server speed to 1x`)
-  Logger.log(`GET /factorio/speed/fast       - Set server speed to 2x`)
-  Logger.log(`GET /factorio/pause            - Pause the game`)
-  Logger.log(`GET /factorio/unpause          - Unpause the game`)
-  Logger.log(`GET /factorio/status           - Get player status`)
-  Logger.log(`POST /factorio/save            - Trigger server save`)
-  Logger.log(`GET /factorio/saves            - List available save files`)
-  Logger.log(`POST /factorio/load/:filename  - Load specific save file`)
-  Logger.log(`POST /factorio/upload-save     - Upload and optionally load save file`)
+  Logger.log(`🚀 Factorio RCON HTTP Server running on: http://localhost:${port}`)
 }
 
 bootstrap().catch((err) => {

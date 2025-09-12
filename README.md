@@ -96,6 +96,12 @@ The container runs both services automatically. No manual Factorio server setup 
 curl http://localhost:8080/factorio/time
 ```
 
+**Get Server Status (Player List):**
+
+```bash
+curl http://localhost:8080/factorio/status
+```
+
 **Slow Down Time:**
 
 ```bash
@@ -112,6 +118,18 @@ curl -X POST http://localhost:8080/factorio/speed/normal
 
 ```bash
 curl -X POST http://localhost:8080/factorio/speed/fast
+```
+
+**Pause Game:**
+
+```bash
+curl -X POST http://localhost:8080/factorio/pause
+```
+
+**Unpause Game:**
+
+```bash
+curl -X POST http://localhost:8080/factorio/unpause
 ```
 
 **Trigger Save:**
