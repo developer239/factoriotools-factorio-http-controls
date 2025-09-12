@@ -218,18 +218,44 @@ export class FactorioRconService implements OnModuleDestroy {
       throw new Error('Save file must be a .zip file')
     }
 
-    // Always save as default.zip to overwrite the default save
+    // Always save as default.zip - but upload AFTER stopping server
     const finalName = 'default.zip'
     const safeName = 'default'
 
     try {
       const savesDir = '/factorio/saves'
+
+      if (autoLoad) {
+        this.logger.log('Auto-load requested - stopping server first before upload')
+        
+        // 1. Disconnect RCON before stopping server
+        await this.disconnect()
+
+        // 2. Kill the Factorio server process (if running)
+        this.logger.log('Stopping Factorio server (if running)...')
+        try {
+          await execAsync('pkill -f "factorio.*--port.*34197"')
+          this.logger.log('Factorio process stopped')
+        } catch (error) {
+          this.logger.log('No Factorio process found to stop (this is ok)')
+        }
+
+        // Wait for clean shutdown and lock file cleanup
+        this.logger.log('Waiting for lock file cleanup...')
+        await this.delay(5000)
+
+        // 3. Clean up any remaining lock files (safety measure)
+        try {
+          await execAsync('rm -f /opt/factorio/.lock')
+          this.logger.debug('Cleaned up any remaining lock files')
+        } catch (error) {
+          this.logger.debug('No lock files to clean (this is ok)')
+        }
+      }
+
+      // 4. NOW upload the file (server is stopped, safe to overwrite default.zip)
       const targetPath = join(savesDir, finalName)
-
-      // Ensure saves directory exists
       await fs.mkdir(savesDir, { recursive: true })
-
-      // Write uploaded file to saves directory
       await fs.writeFile(targetPath, fileBuffer)
       this.logger.log(`Uploaded save file to: ${targetPath}`)
 
@@ -240,14 +266,31 @@ export class FactorioRconService implements OnModuleDestroy {
       let loadResult: string | undefined
 
       if (autoLoad) {
-        this.logger.log(`Auto-loading uploaded save: ${safeName}`)
-        try {
-          loadResult = await this.loadSave(safeName)
-        } catch (loadError) {
-          this.logger.error(`Failed to auto-load save: ${loadError instanceof Error ? loadError.message : String(loadError)}`)
-          // Don't throw here - upload was successful, load failed
-          loadResult = `Load failed: ${loadError instanceof Error ? loadError.message : String(loadError)}`
-        }
+        // 5. Restart Factorio server with the new save
+        this.logger.log(`Restarting Factorio server with uploaded save: ${safeName}`)
+
+        const factorioExecutable = await this.getFactorioExecutable()
+
+        const restartCommand = `${factorioExecutable} \\
+          --port ${process.env.FACTORIO_PORT || '34197'} \\
+          --server-settings /factorio/config/server-settings.json \\
+          --rcon-port ${process.env.FACTORIO_RCON_PORT || '27015'} \\
+          --rcon-password "${process.env.FACTORIO_RCON_PASSWORD || 'factorio'}" \\
+          --server-id /factorio/config/server-id.json \\
+          --mod-directory /factorio/mods \\
+          --start-server "${safeName}"`
+
+        this.logger.debug(`Executing: ${restartCommand}`)
+        await execAsync(`${restartCommand} > /tmp/factorio-restart.log 2>&1 &`)
+        await this.delay(2000)
+
+        // 6. Wait for server to be ready and reconnect RCON
+        this.logger.log('Waiting for Factorio server to be ready...')
+        await this.waitForServerReady()
+        await this.connect()
+
+        loadResult = `Server restarted and loaded save: ${safeName}`
+        this.logger.log(loadResult)
       }
 
       return {
@@ -258,6 +301,17 @@ export class FactorioRconService implements OnModuleDestroy {
     } catch (error) {
       const errorMessage = `Failed to upload save file '${originalName}': ${error instanceof Error ? error.message : String(error)}`
       this.logger.error(errorMessage)
+      
+      // If restart failed, try to reconnect to existing server
+      if (autoLoad) {
+        try {
+          this.logger.log('Attempting to reconnect to existing server...')
+          await this.connect()
+        } catch (reconnectError) {
+          this.logger.error('Failed to reconnect to existing server')
+        }
+      }
+      
       throw new Error(errorMessage)
     }
   }
