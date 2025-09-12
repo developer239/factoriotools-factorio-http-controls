@@ -154,9 +154,13 @@ export class FactorioRconService implements OnModuleDestroy {
       }
 
       // 4. Restart Factorio server with the selected save
-      // Fixed: Use Box64 emulation wrapper for x64 binary on ARM
+      // Auto-detect if Box64 emulation is needed (ARM) or direct execution (x86-64)
       this.logger.log(`Restarting Factorio server with save: ${saveName}`)
-      const restartCommand = `/bin/box64 /opt/factorio/bin/x64/factorio \\
+
+      // Check if Box64 exists (ARM systems) or use direct execution (x86-64 systems)
+      const factorioExecutable = await this.getFactorioExecutable()
+
+      const restartCommand = `${factorioExecutable} \\
         --port ${process.env.FACTORIO_PORT || '34197'} \\
         --server-settings /factorio/config/server-settings.json \\
         --rcon-port ${process.env.FACTORIO_RCON_PORT || '27015'} \\
@@ -167,10 +171,10 @@ export class FactorioRconService implements OnModuleDestroy {
 
       // Execute without background mode to capture errors properly
       this.logger.debug(`Executing: ${restartCommand}`)
-      
+
       // Start the process in background but with proper error handling
-      const childProcess = execAsync(`${restartCommand} > /tmp/factorio-restart.log 2>&1 &`)
-      
+      await execAsync(`${restartCommand} > /tmp/factorio-restart.log 2>&1 &`)
+
       // Don't wait for the command to finish since it runs indefinitely
       // Just give it a moment to start
       await this.delay(2000)
@@ -185,7 +189,7 @@ export class FactorioRconService implements OnModuleDestroy {
     } catch (error) {
       const errorMessage = `Failed to load save '${saveName}': ${error instanceof Error ? error.message : String(error)}`
       this.logger.error(errorMessage)
-      
+
       // If restart failed, try to reconnect to existing server
       try {
         this.logger.log('Attempting to reconnect to existing server...')
@@ -193,7 +197,7 @@ export class FactorioRconService implements OnModuleDestroy {
       } catch (reconnectError) {
         this.logger.error('Failed to reconnect to existing server')
       }
-      
+
       throw new Error(errorMessage)
     }
   }
@@ -275,5 +279,18 @@ export class FactorioRconService implements OnModuleDestroy {
     return new Promise((resolve) => {
       setTimeout(resolve, ms)
     })
+  }
+
+  private async getFactorioExecutable(): Promise<string> {
+    try {
+      // Check if Box64 exists (ARM systems like Apple Silicon)
+      await execAsync('which box64')
+      this.logger.debug('Box64 found, using emulated execution')
+      return '/bin/box64 /opt/factorio/bin/x64/factorio'
+    } catch (error) {
+      // Box64 not found, assume native x86-64 system
+      this.logger.debug('Box64 not found, using direct execution')
+      return '/opt/factorio/bin/x64/factorio'
+    }
   }
 }
