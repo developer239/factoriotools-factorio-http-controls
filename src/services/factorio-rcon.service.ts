@@ -218,11 +218,9 @@ export class FactorioRconService implements OnModuleDestroy {
       throw new Error('Save file must be a .zip file')
     }
 
-    // Generate safe filename (remove any path components and special characters)
-    const safeName = originalName
-      .replace(/[^a-zA-Z0-9\-_.]/g, '')
-      .replace(/\.zip$/i, '')
-    const finalName = `${safeName}.zip`
+    // Always save as default.zip to overwrite the default save
+    const finalName = 'default.zip'
+    const safeName = 'default'
 
     try {
       const savesDir = '/factorio/saves'
