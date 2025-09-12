@@ -117,7 +117,13 @@ curl -X POST http://localhost:8080/factorio/speed/fast
 **Trigger Save:**
 
 ```bash
-curl http://localhost:8080/factorio/save
+curl -X POST http://localhost:8080/factorio/save
+```
+
+**List Save Files:**
+
+```bash
+curl http://localhost:8080/factorio/saves
 ```
 
 ### Save File Management

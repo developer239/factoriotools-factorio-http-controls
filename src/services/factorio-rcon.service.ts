@@ -1,3 +1,5 @@
+import { promises as fs } from 'fs'
+import { join } from 'path'
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Rcon } from 'rcon-client'
@@ -77,6 +79,39 @@ export class FactorioRconService implements OnModuleDestroy {
 
   getServerTime(): Promise<string> {
     return this.executeCommand('/time')
+  }
+
+  async listSaves(): Promise<
+    { name: string; size: number; modified: Date }[]
+  > {
+    try {
+      const savesDir = '/factorio/saves'
+      const files = await fs.readdir(savesDir)
+
+      // Filter .zip save files and get their stats
+      const saveFiles = files.filter((file) => file.endsWith('.zip'))
+
+      const saveInfo = await Promise.all(
+        saveFiles.map(async (file) => {
+          const filePath = join(savesDir, file)
+          const stat = await fs.stat(filePath)
+          return {
+            name: file.replace('.zip', ''), // Remove .zip extension for display
+            size: stat.size,
+            modified: stat.mtime,
+          }
+        })
+      )
+
+      // Sort by modification time (newest first)
+      return saveInfo.sort(
+        (saveA, saveB) => saveB.modified.getTime() - saveA.modified.getTime()
+      )
+    } catch (error) {
+      throw new Error(
+        `Failed to list save files: ${error instanceof Error ? error.message : String(error)}`
+      )
+    }
   }
 
   private async ensureConnected(): Promise<void> {

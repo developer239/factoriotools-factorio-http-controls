@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   HttpException,
   HttpStatus,
   Logger,
@@ -134,7 +135,7 @@ export class FactorioController {
     }
   }
 
-  @Get('save')
+  @Post('save')
   async triggerSave(): Promise<{ message: string; result: string }> {
     try {
       const result = await this.factorioRconService.executeCommand('/save')
@@ -148,6 +149,33 @@ export class FactorioController {
       )
       throw new HttpException(
         'Failed to trigger save',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
+  }
+
+  @Get('saves')
+  async listSaves(): Promise<{ message: string; saves: {name: string, size: number, modified: string}[] }> {
+    try {
+      const saves = await this.factorioRconService.listSaves()
+      
+      // Convert dates to ISO strings for JSON response
+      const formattedSaves = saves.map(save => ({
+        name: save.name,
+        size: save.size,
+        modified: save.modified.toISOString()
+      }))
+      
+      return {
+        message: `Found ${saves.length} save file(s)`,
+        saves: formattedSaves
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to list saves: ${error instanceof Error ? error.message : String(error)}`
+      )
+      throw new HttpException(
+        'Failed to list save files',
         HttpStatus.INTERNAL_SERVER_ERROR
       )
     }

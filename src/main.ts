@@ -33,7 +33,8 @@ async function bootstrap() {
   Logger.log(`GET /factorio/pause            - Pause the game`)
   Logger.log(`GET /factorio/unpause          - Unpause the game`)
   Logger.log(`GET /factorio/status           - Get player status`)
-  Logger.log(`GET /factorio/save             - Trigger server save`)
+  Logger.log(`POST /factorio/save            - Trigger server save`)
+  Logger.log(`GET /factorio/saves            - List available save files`)
 }
 
 bootstrap().catch((err) => {
