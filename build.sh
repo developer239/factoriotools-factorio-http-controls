@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build script for Factorio HTTP Controls with configurable version
 
-VERSION=${1:-1.1.110}
+VERSION=${1:-2.0.55}
 
 echo "Building Factorio HTTP Controls with Factorio version: $VERSION"
 

@@ -7,7 +7,7 @@ endpoints for minimal server control.
 
 ### 1. Build Docker Image
 
-Build the Docker image with default Factorio version (1.1.110):
+Build the Docker image with default Factorio version (2.0.55):
 
 ```bash
 docker build -t factorio-with-http-controls .
@@ -16,8 +16,8 @@ docker build -t factorio-with-http-controls .
 **Build with specific Factorio version:**
 
 ```bash
-# Build with Factorio 2.0.55
-docker build --build-arg FACTORIO_VERSION=2.0.55 -t factorio-with-http-controls .
+# Build with Factorio 1.1.110
+docker build --build-arg FACTORIO_VERSION=1.1.110 -t factorio-with-http-controls .
 
 # Build with Factorio 1.1.109
 docker build --build-arg FACTORIO_VERSION=1.1.109 -t factorio-with-http-controls .
@@ -31,11 +31,11 @@ docker build --build-arg FACTORIO_VERSION=1.1.109 -t factorio-with-http-controls
 # Make executable and use
 chmod +x build.sh
 
-# Build with default version (1.1.110)
+# Build with default version (2.0.55)
 ./build.sh
 
 # Build with specific version
-./build.sh 2.0.55
+./build.sh 1.1.110
 ```
 
 ### 2. Environment Configuration
@@ -48,6 +48,28 @@ cp .env.example .env
 
 ### 3. Run the Container
 
+**Server Configuration Environment Variables:**
+
+The container supports the following environment variables for server configuration:
+
+```bash
+# Server Identity
+FACTORIO_SERVER_NAME="My Factorio Server"           # Server name (default: "My Factorio Server")
+FACTORIO_SERVER_DESCRIPTION="Custom description"    # Server description (default: "Factorio server with HTTP controls")
+
+# Game Settings  
+FACTORIO_MAX_PLAYERS=10                             # Maximum players (default: 10)
+FACTORIO_ADMIN_USERS='["username1","username2"]'    # Admin users JSON array (default: "[]")
+
+# RCON Configuration
+FACTORIO_RCON_HOST=localhost                        # RCON host (default: localhost)
+FACTORIO_RCON_PORT=27015                           # RCON port (default: 27015)
+FACTORIO_RCON_PASSWORD=factorio                    # RCON password (default: factorio)
+
+# Save Configuration
+FACTORIO_SAVE_NAME=default                         # Save file name (default: default)
+```
+
 Run the all-in-one container (includes both Factorio server and HTTP API):
 
 ```bash
@@ -57,6 +79,20 @@ docker run -d \
   -p 34197:34197/udp \
   -p 8080:8080 \
   -v factorio-saves:/factorio/saves \
+  factorio-with-http-controls
+```
+
+**Example with custom configuration:**
+
+```bash
+docker run -d \
+  --name factorio-server \
+  -p 34197:34197/udp \
+  -p 8080:8080 \
+  -v factorio-saves:/factorio/saves \
+  -e FACTORIO_SERVER_NAME="My Custom Server" \
+  -e FACTORIO_MAX_PLAYERS=15 \
+  -e FACTORIO_ADMIN_USERS='["admin1","admin2"]' \
   factorio-with-http-controls
 ```
 

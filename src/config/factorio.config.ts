@@ -12,7 +12,6 @@ export const factorioConfigSchema = z.object({
     saveName: z.string().default('default'),
     serverSettingsPath: z.string().optional(),
     modsPath: z.string().optional(),
-    autoStart: z.boolean().default(false),
   }),
 })
 
@@ -31,7 +30,6 @@ export const factorioConfig = (): { factorio: FactorioConfig } => {
       saveName: process.env.FACTORIO_SAVE_NAME || 'default',
       serverSettingsPath: process.env.FACTORIO_SERVER_SETTINGS_PATH,
       modsPath: process.env.FACTORIO_MODS_PATH,
-      autoStart: process.env.FACTORIO_AUTO_START === 'true',
     },
   })
 

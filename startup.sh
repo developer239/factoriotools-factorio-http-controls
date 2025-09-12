@@ -12,6 +12,12 @@ export FACTORIO_RCON_PORT=${FACTORIO_RCON_PORT:-27015}
 export FACTORIO_RCON_PASSWORD=${FACTORIO_RCON_PASSWORD:-factorio}
 export FACTORIO_SAVE_NAME=${FACTORIO_SAVE_NAME:-default}
 
+# Server configuration environment variables
+export FACTORIO_SERVER_NAME=${FACTORIO_SERVER_NAME:-"My Factorio Server"}
+export FACTORIO_SERVER_DESCRIPTION=${FACTORIO_SERVER_DESCRIPTION:-"Factorio server with HTTP controls"}
+export FACTORIO_MAX_PLAYERS=${FACTORIO_MAX_PLAYERS:-10}
+export FACTORIO_ADMIN_USERS=${FACTORIO_ADMIN_USERS:-"[]"}
+
 # Set Factorio game server port (separate from HTTP API port)
 export FACTORIO_PORT=34197
 
@@ -21,6 +27,10 @@ echo "RCON Port: $FACTORIO_RCON_PORT"
 echo "HTTP API Port: $HTTP_API_PORT"
 echo "Factorio Game Port: $FACTORIO_PORT"
 echo "Save Name: $FACTORIO_SAVE_NAME"
+echo "Server Name: $FACTORIO_SERVER_NAME"
+echo "Server Description: $FACTORIO_SERVER_DESCRIPTION"
+echo "Max Players: $FACTORIO_MAX_PLAYERS"
+echo "Admin Users: $FACTORIO_ADMIN_USERS"
 
 # Function to initialize Factorio configuration
 init_factorio_config() {
@@ -41,18 +51,25 @@ init_factorio_config() {
 
         # Use jq to modify server settings for IP-only access
         tmp_file=$(mktemp)
-        jq --arg name "${FACTORIO_SERVER_NAME:-My Factorio Server}" \
-           --arg desc "${FACTORIO_SERVER_DESCRIPTION:-Factorio server with HTTP controls}" \
+        jq --arg name "$FACTORIO_SERVER_NAME" \
+           --arg desc "$FACTORIO_SERVER_DESCRIPTION" \
+           --arg maxplayers "$FACTORIO_MAX_PLAYERS" \
            '.visibility = {"public": false, "lan": false} |
             .require_user_verification = false |
             .game_password = "" |
             .name = $name |
-            .description = $desc' \
+            .description = $desc |
+            .max_players = ($maxplayers | tonumber)' \
            /factorio/config/server-settings.json > "$tmp_file" && \
            mv "$tmp_file" /factorio/config/server-settings.json
 
         echo "Server configured for IP-based connections (hidden from public listing)"
     fi
+
+    # Create/update admin list configuration
+    echo "Configuring admin users..."
+    echo "$FACTORIO_ADMIN_USERS" > /factorio/config/server-adminlist.json
+    echo "Admin list configured with: $FACTORIO_ADMIN_USERS"
 
     if [[ ! -f /factorio/config/map-gen-settings.json ]]; then
         cp /opt/factorio/data/map-gen-settings.example.json /factorio/config/map-gen-settings.json
