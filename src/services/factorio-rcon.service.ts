@@ -202,6 +202,68 @@ export class FactorioRconService implements OnModuleDestroy {
     }
   }
 
+  async uploadAndLoadSave(
+    fileBuffer: Buffer,
+    originalName: string,
+    autoLoad = false
+  ): Promise<{ 
+    message: string; 
+    fileName: string; 
+    loadResult?: string 
+  }> {
+    this.logger.log(`Starting upload process for save: ${originalName}`)
+
+    // Validate file extension
+    if (!originalName.toLowerCase().endsWith('.zip')) {
+      throw new Error('Save file must be a .zip file')
+    }
+
+    // Generate safe filename (remove any path components and special characters)
+    const safeName = originalName
+      .replace(/[^a-zA-Z0-9\-_.]/g, '')
+      .replace(/\.zip$/i, '')
+    const finalName = `${safeName}.zip`
+
+    try {
+      const savesDir = '/factorio/saves'
+      const targetPath = join(savesDir, finalName)
+
+      // Ensure saves directory exists
+      await fs.mkdir(savesDir, { recursive: true })
+
+      // Write uploaded file to saves directory
+      await fs.writeFile(targetPath, fileBuffer)
+      this.logger.log(`Uploaded save file to: ${targetPath}`)
+
+      // Verify file was written correctly
+      const stats = await fs.stat(targetPath)
+      this.logger.log(`File written successfully, size: ${stats.size} bytes`)
+
+      let loadResult: string | undefined
+
+      if (autoLoad) {
+        this.logger.log(`Auto-loading uploaded save: ${safeName}`)
+        try {
+          loadResult = await this.loadSave(safeName)
+        } catch (loadError) {
+          this.logger.error(`Failed to auto-load save: ${loadError instanceof Error ? loadError.message : String(loadError)}`)
+          // Don't throw here - upload was successful, load failed
+          loadResult = `Load failed: ${loadError instanceof Error ? loadError.message : String(loadError)}`
+        }
+      }
+
+      return {
+        message: `Save file uploaded successfully${autoLoad ? ' and loaded' : ''}`,
+        fileName: finalName,
+        loadResult,
+      }
+    } catch (error) {
+      const errorMessage = `Failed to upload save file '${originalName}': ${error instanceof Error ? error.message : String(error)}`
+      this.logger.error(errorMessage)
+      throw new Error(errorMessage)
+    }
+  }
+
   private async waitForServerReady(): Promise<void> {
     const maxAttempts = 30 // 60 seconds total
     const delayMs = 2000

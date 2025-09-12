@@ -36,6 +36,7 @@ async function bootstrap() {
   Logger.log(`POST /factorio/save            - Trigger server save`)
   Logger.log(`GET /factorio/saves            - List available save files`)
   Logger.log(`POST /factorio/load/:filename  - Load specific save file`)
+  Logger.log(`POST /factorio/upload-save     - Upload and optionally load save file`)
 }
 
 bootstrap().catch((err) => {

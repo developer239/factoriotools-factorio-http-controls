@@ -6,7 +6,11 @@ import {
   Logger,
   Param,
   Post,
+  UploadedFile,
+  UseInterceptors,
+  Body,
 } from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
 import { FactorioRconService } from '../services/factorio-rcon.service'
 
 @Controller('factorio')
@@ -202,6 +206,69 @@ export class FactorioController {
       )
       throw new HttpException(
         'Failed to load save',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
+  }
+
+  @Post('upload-save')
+  @UseInterceptors(
+    FileInterceptor('saveFile', {
+      limits: {
+        fileSize: 500 * 1024 * 1024, // 500MB max file size
+      },
+      fileFilter: (req, file, callback) => {
+        if (!file.originalname.toLowerCase().endsWith('.zip')) {
+          return callback(
+            new Error('Only .zip save files are allowed'),
+            false
+          )
+        }
+        callback(null, true)
+      },
+    })
+  )
+  async uploadSave(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('autoLoad') autoLoad?: string
+  ): Promise<{
+    message: string
+    fileName: string
+    uploadSize: number
+    loadResult?: string
+  }> {
+    if (!file) {
+      throw new HttpException(
+        'No save file provided. Use "saveFile" field name.',
+        HttpStatus.BAD_REQUEST
+      )
+    }
+
+    try {
+      const shouldAutoLoad = autoLoad === 'true' || autoLoad === '1'
+      
+      this.logger.log(
+        `Processing uploaded save file: ${file.originalname} (${file.size} bytes)${shouldAutoLoad ? ' with auto-load' : ''}`
+      )
+
+      const result = await this.factorioRconService.uploadAndLoadSave(
+        file.buffer,
+        file.originalname,
+        shouldAutoLoad
+      )
+
+      return {
+        message: result.message,
+        fileName: result.fileName,
+        uploadSize: file.size,
+        loadResult: result.loadResult,
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to upload save file '${file?.originalname}': ${error instanceof Error ? error.message : String(error)}`
+      )
+      throw new HttpException(
+        `Failed to upload save file: ${error instanceof Error ? error.message : 'Unknown error'}`,
         HttpStatus.INTERNAL_SERVER_ERROR
       )
     }

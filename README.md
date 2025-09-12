@@ -133,17 +133,10 @@ curl -X POST http://localhost:8080/factorio/load/default
 curl -X POST http://localhost:8080/factorio/load/_autosave4
 ```
 
-### Save File Management
-
-**Access saves volume:**
+**Load Local Save File:**
 
 ```bash
-# List save files
-docker exec factorio-server ls -la /factorio/saves/
-
-# Copy save file out
-docker cp factorio-server:/factorio/saves/default.zip ./backup.zip
-
-# Copy save file in
-docker cp ./my-save.zip factorio-server:/factorio/saves/
+curl -X POST http://localhost:8080/factorio/upload-save \
+  -F "saveFile=@/Users/michaljarnot/Library/Application Support/factorio/saves/example-to-load-on-server.zip" \
+  -F "autoLoad=true"
 ```
