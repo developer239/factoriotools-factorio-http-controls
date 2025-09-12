@@ -1,7 +1,6 @@
 # Factorio With HTTP Controls
 
-All-in-one Docker container with Factorio server and NestJS HTTP API for RCON management. Provides REST
-endpoints for minimal server control.
+Docker container with Factorio server and NestJS HTTP API for RCON management.
 
 ## Setup
 
@@ -25,19 +24,6 @@ docker build --build-arg FACTORIO_VERSION=1.1.109 -t factorio-with-http-controls
 
 **Note:** Check [factoriotools/factorio](https://hub.docker.com/r/factoriotools/factorio/tags) for all available versions.
 
-**Quick Build Script (Optional):**
-
-```bash
-# Make executable and use
-chmod +x build.sh
-
-# Build with default version (2.0.55)
-./build.sh
-
-# Build with specific version
-./build.sh 1.1.110
-```
-
 ### 2. Environment Configuration
 
 Copy the example environment file and customize:
@@ -47,28 +33,6 @@ cp .env.example .env
 ```
 
 ### 3. Run the Container
-
-**Server Configuration Environment Variables:**
-
-The container supports the following environment variables for server configuration:
-
-```bash
-# Server Identity
-FACTORIO_SERVER_NAME="My Factorio Server"           # Server name (default: "My Factorio Server")
-FACTORIO_SERVER_DESCRIPTION="Custom description"    # Server description (default: "Factorio server with HTTP controls")
-
-# Game Settings  
-FACTORIO_MAX_PLAYERS=10                             # Maximum players (default: 10)
-FACTORIO_ADMIN_USERS='["username1","username2"]'    # Admin users JSON array (default: "[]")
-
-# RCON Configuration
-FACTORIO_RCON_HOST=localhost                        # RCON host (default: localhost)
-FACTORIO_RCON_PORT=27015                           # RCON port (default: 27015)
-FACTORIO_RCON_PASSWORD=factorio                    # RCON password (default: factorio)
-
-# Save Configuration
-FACTORIO_SAVE_NAME=default                         # Save file name (default: default)
-```
 
 Run the all-in-one container (includes both Factorio server and HTTP API):
 
@@ -81,27 +45,6 @@ docker run -d \
   -v factorio-saves:/factorio/saves \
   factorio-with-http-controls
 ```
-
-**Example with custom configuration:**
-
-```bash
-docker run -d \
-  --name factorio-server \
-  -p 34197:34197/udp \
-  -p 8080:8080 \
-  -v factorio-saves:/factorio/saves \
-  -e FACTORIO_SERVER_NAME="My Custom Server" \
-  -e FACTORIO_MAX_PLAYERS=15 \
-  -e FACTORIO_ADMIN_USERS='["admin1","admin2"]' \
-  factorio-with-http-controls
-```
-
-The container automatically:
-
-- Starts Factorio server with RCON enabled
-- Generates `server-settings.json` with proper RCON configuration
-- Configures server for IP-based connections (hidden from public browser)
-- Starts the HTTP API server
 
 ## Connecting to the Server
 
@@ -193,4 +136,41 @@ curl -X POST http://localhost:8080/factorio/load/_autosave4
 curl -X POST http://localhost:8080/factorio/upload-save \
   -F "saveFile=@/Users/michaljarnot/Library/Application Support/factorio/saves/example-to-load-on-server.zip" \
   -F "autoLoad=true"
+```
+
+## Docker Hub Deployment
+
+### Publishing to Docker Hub
+
+**1. Build and Tag for Docker Hub:**
+
+```bash
+# Build with specific Factorio version
+docker build --build-arg FACTORIO_VERSION=2.0.55 -t jarnotmichal/factorio-with-http-controls:2.0.55 .
+
+# Build latest tag (uses default version 2.0.55)
+docker build -t jarnotmichal/factorio-with-http-controls:latest .
+```
+
+**2. Push to Docker Hub:**
+
+```bash
+# Push latest tag
+docker push jarnotmichal/factorio-with-http-controls:latest
+
+# Push specific version
+docker push jarnotmichal/factorio-with-http-controls:2.0.55
+```
+
+**3. Once published, others can use your image directly:**
+
+```bash
+# Pull and run from Docker Hub (from project directory with .env file)
+docker run -d \
+  --name factorio-server \
+  --env-file .env \
+  -p 34197:34197/udp \
+  -p 8080:8080 \
+  -v factorio-saves:/factorio/saves \
+  jarnotmichal/factorio-with-http-controls:2.0.55
 ```
