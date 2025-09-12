@@ -1,7 +1,7 @@
 {
   "name": "factoriotools-factorio-with-http-controls",
   "version": "1.0.0",
-  "description": "NestJS HTTP server for Factorio RCON management and instance control",
+  "description": "NestJS HTTP server for Factorio RCON management and instance control with configurable Factorio versions",
   "author": "Factorio Server",
   "private": true,
   "license": "MIT",

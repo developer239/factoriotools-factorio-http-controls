@@ -1,4 +1,7 @@
 # Multi-stage build for NestJS RCON Server + Factorio
+# Build argument for Factorio version (defaults to 1.1.110)
+ARG FACTORIO_VERSION=1.1.110
+
 # Stage 1: Build the NestJS application
 FROM node:20-alpine AS builder
 
@@ -20,7 +23,7 @@ COPY src/ ./src/
 RUN yarn build
 
 # Stage 2: Create final image extending Factorio
-FROM factoriotools/factorio:2.0.55
+FROM factoriotools/factorio:${FACTORIO_VERSION}
 
 # Install Node.js and netcat in the Factorio container
 USER root

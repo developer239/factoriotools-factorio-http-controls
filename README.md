@@ -1,16 +1,41 @@
 # Factorio With HTTP Controls
 
-All-in-one Docker container with Factorio 2.0.55 server and NestJS HTTP API for RCON management. Provides REST
+All-in-one Docker container with Factorio server and NestJS HTTP API for RCON management. Provides REST
 endpoints for minimal server control.
 
 ## Setup
 
 ### 1. Build Docker Image
 
-Build the Docker image locally:
+Build the Docker image with default Factorio version (1.1.110):
 
 ```bash
 docker build -t factorio-with-http-controls .
+```
+
+**Build with specific Factorio version:**
+
+```bash
+# Build with Factorio 2.0.55
+docker build --build-arg FACTORIO_VERSION=2.0.55 -t factorio-with-http-controls .
+
+# Build with Factorio 1.1.109
+docker build --build-arg FACTORIO_VERSION=1.1.109 -t factorio-with-http-controls .
+```
+
+**Note:** Check [factoriotools/factorio](https://hub.docker.com/r/factoriotools/factorio/tags) for all available versions.
+
+**Quick Build Script (Optional):**
+
+```bash
+# Make executable and use
+chmod +x build.sh
+
+# Build with default version (1.1.110)
+./build.sh
+
+# Build with specific version
+./build.sh 2.0.55
 ```
 
 ### 2. Environment Configuration
@@ -37,7 +62,7 @@ docker run -d \
 
 The container automatically:
 
-- Starts Factorio server 2.0.55 with RCON enabled
+- Starts Factorio server with RCON enabled
 - Generates `server-settings.json` with proper RCON configuration
 - Configures server for IP-based connections (hidden from public browser)
 - Starts the HTTP API server
