@@ -43,7 +43,7 @@ init_factorio_config() {
         tmp_file=$(mktemp)
         jq --arg name "${FACTORIO_SERVER_NAME:-My Factorio Server}" \
            --arg desc "${FACTORIO_SERVER_DESCRIPTION:-Factorio server with HTTP controls}" \
-           '.visibility = {"public": false, "lan": true} |
+           '.visibility = {"public": false, "lan": false} |
             .require_user_verification = false |
             .game_password = "" |
             .name = $name |

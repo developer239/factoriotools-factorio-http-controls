@@ -20,7 +20,7 @@ COPY src/ ./src/
 RUN yarn build
 
 # Stage 2: Create final image extending Factorio
-FROM factoriotools/factorio:1.1.110
+FROM factoriotools/factorio:2.0.55
 
 # Install Node.js and netcat in the Factorio container
 USER root

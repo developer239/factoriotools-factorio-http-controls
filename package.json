@@ -1,5 +1,5 @@
 {
-  "name": "factoriotools-factorio-http-controls",
+  "name": "factoriotools-factorio-with-http-controls",
   "version": "1.0.0",
   "description": "NestJS HTTP server for Factorio RCON management and instance control",
   "author": "Factorio Server",

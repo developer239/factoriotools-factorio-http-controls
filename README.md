@@ -1,18 +1,16 @@
-# Factorio HTTP Controls
+# Factorio With HTTP Controls
 
-All-in-one Docker container with Factorio 1.1.110 server and NestJS HTTP API for RCON management. Provides REST
-endpoints for server control, command execution, and game management.
-
-**Server is configured for direct IP connections and will not appear in the public server browser.**
+All-in-one Docker container with Factorio 2.0.55 server and NestJS HTTP API for RCON management. Provides REST
+endpoints for minimal server control.
 
 ## Setup
 
 ### 1. Build Docker Image
-sa
+
 Build the Docker image locally:
 
 ```bash
-docker build -t factorio-http-controls .
+docker build -t factorio-with-http-controls .
 ```
 
 ### 2. Environment Configuration
@@ -34,26 +32,27 @@ docker run -d \
   -p 34197:34197/udp \
   -p 8080:8080 \
   -v factorio-saves:/factorio/saves \
-  factorio-http-controls
+  factorio-with-http-controls
 ```
 
 The container automatically:
 
-- Starts Factorio server 1.1.110 with RCON enabled
+- Starts Factorio server 2.0.55 with RCON enabled
 - Generates `server-settings.json` with proper RCON configuration
 - Configures server for IP-based connections (hidden from public browser)
 - Starts the HTTP API server
-- Coordinates both services
 
 ## Connecting to the Server
 
 **Direct IP Connection:**
+
 1. In Factorio, go to "Play" → "Multiplayer"
 2. Click "Connect to address"
-3. Enter your server's IP address and port: `your-server-ip:34197`
-4. The server will not appear in the public server browser (this is by design)
+3. Enter your server's IP address and port: `your-server-ip:34197` for example `127.0.0.1:34197`
+4. The server will not appear in the public server browser
 
 **Server Configuration:**
+
 - Game Port: `34197/udp` (for Factorio client connections)
 - HTTP API Port: `8080/tcp` (for RCON management)
 - RCON Port: `27015/tcp` (internal only)
