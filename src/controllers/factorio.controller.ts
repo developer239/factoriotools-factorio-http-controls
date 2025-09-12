@@ -1,10 +1,11 @@
 import {
   Controller,
   Get,
-  Post,
   HttpException,
   HttpStatus,
   Logger,
+  Param,
+  Post,
 } from '@nestjs/common'
 import { FactorioRconService } from '../services/factorio-rcon.service'
 
@@ -141,7 +142,7 @@ export class FactorioController {
       const result = await this.factorioRconService.executeCommand('/save')
       return {
         message: 'Save triggered successfully',
-        result: result.trim()
+        result: result.trim(),
       }
     } catch (error) {
       this.logger.error(
@@ -155,20 +156,23 @@ export class FactorioController {
   }
 
   @Get('saves')
-  async listSaves(): Promise<{ message: string; saves: {name: string, size: number, modified: string}[] }> {
+  async listSaves(): Promise<{
+    message: string
+    saves: { name: string; size: number; modified: string }[]
+  }> {
     try {
       const saves = await this.factorioRconService.listSaves()
-      
+
       // Convert dates to ISO strings for JSON response
-      const formattedSaves = saves.map(save => ({
+      const formattedSaves = saves.map((save) => ({
         name: save.name,
         size: save.size,
-        modified: save.modified.toISOString()
+        modified: save.modified.toISOString(),
       }))
-      
+
       return {
         message: `Found ${saves.length} save file(s)`,
-        saves: formattedSaves
+        saves: formattedSaves,
       }
     } catch (error) {
       this.logger.error(
@@ -176,6 +180,28 @@ export class FactorioController {
       )
       throw new HttpException(
         'Failed to list save files',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
+  }
+
+  @Post('load/:filename')
+  async loadSave(
+    @Param('filename') filename: string
+  ): Promise<{ message: string; saveName: string; result: string }> {
+    try {
+      const result = await this.factorioRconService.loadSave(filename)
+      return {
+        message: 'Save loaded successfully',
+        saveName: filename,
+        result: result.trim(),
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to load save '${filename}': ${error instanceof Error ? error.message : String(error)}`
+      )
+      throw new HttpException(
+        'Failed to load save',
         HttpStatus.INTERNAL_SERVER_ERROR
       )
     }

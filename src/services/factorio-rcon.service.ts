@@ -1,9 +1,13 @@
+import { exec } from 'child_process'
 import { promises as fs } from 'fs'
 import { join } from 'path'
+import { promisify } from 'util'
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Rcon } from 'rcon-client'
 import { FactorioConfig } from '../config/factorio.config'
+
+const execAsync = promisify(exec)
 
 @Injectable()
 export class FactorioRconService implements OnModuleDestroy {
@@ -81,9 +85,7 @@ export class FactorioRconService implements OnModuleDestroy {
     return this.executeCommand('/time')
   }
 
-  async listSaves(): Promise<
-    { name: string; size: number; modified: Date }[]
-  > {
+  async listSaves(): Promise<{ name: string; size: number; modified: Date }[]> {
     try {
       const savesDir = '/factorio/saves'
       const files = await fs.readdir(savesDir)
@@ -111,6 +113,136 @@ export class FactorioRconService implements OnModuleDestroy {
       throw new Error(
         `Failed to list save files: ${error instanceof Error ? error.message : String(error)}`
       )
+    }
+  }
+
+  async loadSave(saveName: string): Promise<string> {
+    // Validate save exists first
+    const saves = await this.listSaves()
+    const isSaveFound = saves.some((save) => save.name === saveName)
+
+    if (!isSaveFound) {
+      throw new Error(`Save file '${saveName}' not found`)
+    }
+
+    this.logger.log(`Starting load process for save: ${saveName}`)
+
+    try {
+      // 1. Disconnect RCON before stopping server
+      await this.disconnect()
+
+      // 2. Kill the Factorio server process (if running)
+      // Fixed: Use correct process pattern that matches actual running process
+      this.logger.log('Stopping Factorio server (if running)...')
+      try {
+        await execAsync('pkill -f "factorio.*--port.*34197"')
+        this.logger.log('Factorio process stopped')
+      } catch (error) {
+        this.logger.log('No Factorio process found to stop (this is ok)')
+      }
+
+      // Wait longer for clean shutdown and lock file cleanup
+      this.logger.log('Waiting for lock file cleanup...')
+      await this.delay(5000) // Increased from 2000ms to 5000ms
+
+      // 3. Clean up any remaining lock files (safety measure)
+      try {
+        await execAsync('rm -f /opt/factorio/.lock')
+        this.logger.debug('Cleaned up any remaining lock files')
+      } catch (error) {
+        this.logger.debug('No lock files to clean (this is ok)')
+      }
+
+      // 4. Restart Factorio server with the selected save
+      // Fixed: Use Box64 emulation wrapper for x64 binary on ARM
+      this.logger.log(`Restarting Factorio server with save: ${saveName}`)
+      const restartCommand = `/bin/box64 /opt/factorio/bin/x64/factorio \\
+        --port ${process.env.FACTORIO_PORT || '34197'} \\
+        --server-settings /factorio/config/server-settings.json \\
+        --rcon-port ${process.env.FACTORIO_RCON_PORT || '27015'} \\
+        --rcon-password "${process.env.FACTORIO_RCON_PASSWORD || 'factorio'}" \\
+        --server-id /factorio/config/server-id.json \\
+        --mod-directory /factorio/mods \\
+        --start-server "${saveName}"`
+
+      // Execute without background mode to capture errors properly
+      this.logger.debug(`Executing: ${restartCommand}`)
+      
+      // Start the process in background but with proper error handling
+      const childProcess = execAsync(`${restartCommand} > /tmp/factorio-restart.log 2>&1 &`)
+      
+      // Don't wait for the command to finish since it runs indefinitely
+      // Just give it a moment to start
+      await this.delay(2000)
+
+      // 5. Wait for server to be ready and reconnect RCON
+      this.logger.log('Waiting for Factorio server to be ready...')
+      await this.waitForServerReady()
+      await this.connect()
+
+      this.logger.log(`Successfully loaded save: ${saveName}`)
+      return `Server restarted and loaded save: ${saveName}`
+    } catch (error) {
+      const errorMessage = `Failed to load save '${saveName}': ${error instanceof Error ? error.message : String(error)}`
+      this.logger.error(errorMessage)
+      
+      // If restart failed, try to reconnect to existing server
+      try {
+        this.logger.log('Attempting to reconnect to existing server...')
+        await this.connect()
+      } catch (reconnectError) {
+        this.logger.error('Failed to reconnect to existing server')
+      }
+      
+      throw new Error(errorMessage)
+    }
+  }
+
+  private async waitForServerReady(): Promise<void> {
+    const maxAttempts = 30 // 60 seconds total
+    const delayMs = 2000
+
+    for (let attempts = 0; attempts < maxAttempts; attempts += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const isReady = await this.testConnection()
+
+      if (isReady) {
+        this.logger.log('Factorio server is ready!')
+        return
+      }
+
+      this.logger.debug(
+        `Waiting for server... attempt ${attempts + 1}/${maxAttempts}`
+      )
+
+      if (attempts < maxAttempts - 1) {
+        // eslint-disable-next-line no-await-in-loop
+        await this.delay(delayMs)
+      }
+    }
+
+    throw new Error(
+      `Timeout waiting for Factorio server to be ready after ${(maxAttempts * delayMs) / 1000} seconds`
+    )
+  }
+
+  private async testConnection(): Promise<boolean> {
+    try {
+      const testConnection = new Rcon({
+        host: this.config.host,
+        port: this.config.port,
+        password: this.config.password,
+        timeout: 3000, // Increased timeout for stability
+      })
+
+      await testConnection.connect()
+      await testConnection.end()
+      return true
+    } catch (error) {
+      this.logger.debug(
+        `Connection test failed: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return false
     }
   }
 

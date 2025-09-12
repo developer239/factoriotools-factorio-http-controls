@@ -17,3 +17,5 @@ README.md
 *.log
 dist
 src/**/*.spec.ts
+
+local-dev-test.sh

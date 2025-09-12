@@ -126,6 +126,13 @@ curl -X POST http://localhost:8080/factorio/save
 curl http://localhost:8080/factorio/saves
 ```
 
+**Load Specific Save:**
+
+```bash
+curl -X POST http://localhost:8080/factorio/load/default
+curl -X POST http://localhost:8080/factorio/load/_autosave4
+```
+
 ### Save File Management
 
 **Access saves volume:**
