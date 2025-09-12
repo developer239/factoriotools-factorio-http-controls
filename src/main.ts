@@ -26,13 +26,14 @@ async function bootstrap() {
     `🚀 Factorio RCON HTTP Server running on: http://localhost:${port}`
   )
   Logger.log(`API Endpoints:`)
-  Logger.log(`GET  /factorio/time             - Server time`)
-  Logger.log(`GET  /factorio/speed/slow       - Set server speed to 0.1x`)
-  Logger.log(`GET  /factorio/speed/normal     - Set server speed to 1x`)
-  Logger.log(`GET  /factorio/speed/fast       - Set server speed to 2x`)
-  Logger.log(`GET  /factorio/pause            - Pause the game`)
-  Logger.log(`GET  /factorio/unpause          - Unpause the game`)
-  Logger.log(`GET  /factorio/status           - Get player status`)
+  Logger.log(`GET /factorio/time             - Server time`)
+  Logger.log(`GET /factorio/speed/slow       - Set server speed to 0.1x`)
+  Logger.log(`GET /factorio/speed/normal     - Set server speed to 1x`)
+  Logger.log(`GET /factorio/speed/fast       - Set server speed to 2x`)
+  Logger.log(`GET /factorio/pause            - Pause the game`)
+  Logger.log(`GET /factorio/unpause          - Unpause the game`)
+  Logger.log(`GET /factorio/status           - Get player status`)
+  Logger.log(`GET /factorio/save             - Trigger server save`)
 }
 
 bootstrap().catch((err) => {

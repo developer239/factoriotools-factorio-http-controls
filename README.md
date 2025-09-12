@@ -89,6 +89,12 @@ curl -X POST http://localhost:8080/factorio/speed/normal
 curl -X POST http://localhost:8080/factorio/speed/fast
 ```
 
+**Trigger Save:**
+
+```bash
+curl http://localhost:8080/factorio/save
+```
+
 ### Save File Management
 
 **Access saves volume:**

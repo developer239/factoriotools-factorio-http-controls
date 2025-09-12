@@ -133,4 +133,23 @@ export class FactorioController {
       )
     }
   }
+
+  @Get('save')
+  async triggerSave(): Promise<{ message: string; result: string }> {
+    try {
+      const result = await this.factorioRconService.executeCommand('/save')
+      return {
+        message: 'Save triggered successfully',
+        result: result.trim()
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to trigger save: ${error instanceof Error ? error.message : String(error)}`
+      )
+      throw new HttpException(
+        'Failed to trigger save',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      )
+    }
+  }
 }
