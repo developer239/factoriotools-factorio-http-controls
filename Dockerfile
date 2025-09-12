@@ -20,14 +20,14 @@ COPY src/ ./src/
 RUN yarn build
 
 # Stage 2: Create final image extending Factorio
-FROM factoriotools/factorio:stable
+FROM factoriotools/factorio:1.1.110
 
-# Install Node.js in the Factorio container
+# Install Node.js and netcat in the Factorio container
 USER root
 
-# Install Node.js 20 and Yarn
+# Install Node.js 20, Yarn, and netcat
 RUN apt-get update && \
-    apt-get install -y curl && \
+    apt-get install -y curl netcat-openbsd && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     npm install -g yarn && \
@@ -61,5 +61,6 @@ USER factorio
 # 8080/tcp: HTTP API port
 EXPOSE 34197/udp 27015/tcp 8080/tcp
 
-# Use custom startup script
-CMD ["/opt/rcon-server/startup.sh"]
+# Override the base image's ENTRYPOINT to execute our startup script directly
+ENTRYPOINT ["/opt/rcon-server/startup.sh"]
+CMD []
