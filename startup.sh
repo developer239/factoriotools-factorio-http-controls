@@ -13,6 +13,8 @@ export FACTORIO_SERVER_NAME=${FACTORIO_SERVER_NAME:-"My Factorio Server"}
 export FACTORIO_SERVER_DESCRIPTION=${FACTORIO_SERVER_DESCRIPTION:-"Factorio server with HTTP controls"}
 export FACTORIO_MAX_PLAYERS=${FACTORIO_MAX_PLAYERS:-10}
 export FACTORIO_ADMIN_USERS=${FACTORIO_ADMIN_USERS:-"[]"}
+export FACTORIO_AUTOSAVE_INTERVAL=${FACTORIO_AUTOSAVE_INTERVAL:-10}
+export FACTORIO_AUTOSAVE_SLOTS=${FACTORIO_AUTOSAVE_SLOTS:-5}
 export FACTORIO_PORT=34197
 
 # Architecture detection
@@ -25,6 +27,7 @@ fi
 
 echo "Starting Factorio server: $FACTORIO_SERVER_NAME"
 echo "Game port: $FACTORIO_PORT, HTTP API: $HTTP_API_PORT, RCON: $FACTORIO_RCON_PORT"
+echo "Autosave: ${FACTORIO_AUTOSAVE_INTERVAL}min intervals, ${FACTORIO_AUTOSAVE_SLOTS} slots"
 
 # Initialize Factorio configuration
 init_factorio_config() {
@@ -42,12 +45,16 @@ init_factorio_config() {
         jq --arg name "$FACTORIO_SERVER_NAME" \
            --arg desc "$FACTORIO_SERVER_DESCRIPTION" \
            --arg maxplayers "$FACTORIO_MAX_PLAYERS" \
+           --arg autosave_interval "$FACTORIO_AUTOSAVE_INTERVAL" \
+           --arg autosave_slots "$FACTORIO_AUTOSAVE_SLOTS" \
            '.visibility = {"public": false, "lan": false} |
             .require_user_verification = false |
             .game_password = "" |
             .name = $name |
             .description = $desc |
-            .max_players = ($maxplayers | tonumber)' \
+            .max_players = ($maxplayers | tonumber) |
+            .autosave_interval = ($autosave_interval | tonumber) |
+            .autosave_slots = ($autosave_slots | tonumber)' \
            /factorio/config/server-settings.json > /tmp/settings.json &&
            mv /tmp/settings.json /factorio/config/server-settings.json
     fi
