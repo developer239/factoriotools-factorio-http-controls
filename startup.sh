@@ -22,6 +22,16 @@ export FACTORIO_ADMIN_USERS=${FACTORIO_ADMIN_USERS:-"[]"}
 # Set Factorio game server port (separate from HTTP API port)
 export FACTORIO_PORT=34197
 
+# ARCHITECTURE DETECTION FIX
+ARCH=$(uname -m)
+if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+    FACTORIO_EXEC="/bin/box64 /opt/factorio/bin/x64/factorio"
+    echo "ARM64 detected - using box64 emulation"
+else
+    FACTORIO_EXEC="/opt/factorio/bin/x64/factorio"
+    echo "x86_64 detected - using native execution"
+fi
+
 echo "Configuration:"
 echo "RCON Host: $FACTORIO_RCON_HOST"
 echo "RCON Port: $FACTORIO_RCON_PORT"
@@ -32,6 +42,40 @@ echo "Server Name: $FACTORIO_SERVER_NAME"
 echo "Server Description: $FACTORIO_SERVER_DESCRIPTION"
 echo "Max Players: $FACTORIO_MAX_PLAYERS"
 echo "Admin Users: $FACTORIO_ADMIN_USERS"
+echo "Architecture: $ARCH"
+echo "Factorio Executable: $FACTORIO_EXEC"
+
+# Function to check and handle permissions
+check_permissions() {
+    echo "Checking data directory permissions..."
+
+    # Check if we can write to the data directory
+    if [ ! -w "/data/factorio" ]; then
+        echo "❌ PERMISSION ERROR: Cannot write to /data/factorio"
+        echo "📋 Container runs as user $(id -u):$(id -g) but directory is owned by:"
+        ls -la /data/ | grep factorio || echo "Directory not found"
+        echo ""
+        echo "🔧 MANUAL FIX REQUIRED:"
+        echo "Run this command on your GCP instance:"
+        echo "  sudo chown -R 845:845 /mnt/stateful_partition/factorio"
+        echo ""
+        echo "🏗️  PERMANENT FIX:"
+        echo "Add an initContainer to your container-spec.yaml to fix permissions automatically"
+        echo ""
+        exit 1
+    fi
+
+    # Try to create a test file to verify write permissions
+    if ! touch /data/factorio/.permission_test 2>/dev/null; then
+        echo "❌ PERMISSION ERROR: Cannot create files in /data/factorio"
+        echo "Directory exists but is not writable by user $(id -u):$(id -g)"
+        exit 1
+    fi
+
+    # Clean up test file
+    rm -f /data/factorio/.permission_test
+    echo "✅ Permissions OK - can write to /data/factorio"
+}
 
 # Function to initialize Factorio configuration
 init_factorio_config() {
@@ -40,8 +84,13 @@ init_factorio_config() {
     # Create base factorio directory structure in container filesystem
     mkdir -p /factorio
 
-    # Create required directories (fsGroup in container-spec.yaml handles permissions)
+    # Check permissions before attempting to create directories
+    check_permissions
+
+    # Create required directories - now we know we have permissions
+    echo "Creating data directories..."
     mkdir -p /data/factorio/{saves,config,mods}
+    echo "✅ Data directories created successfully"
 
     # Remove any existing directories in container filesystem and create symlinks to persistent storage
     for dir in saves config mods; do
@@ -102,7 +151,8 @@ init_factorio_config() {
     # Create a new save file if it doesn't exist
     if [[ ! -f "/factorio/saves/${FACTORIO_SAVE_NAME}.zip" ]]; then
         echo "Creating new save file: ${FACTORIO_SAVE_NAME}.zip"
-        /bin/box64 /opt/factorio/bin/x64/factorio \
+        # FIXED: Use architecture-aware executable
+        $FACTORIO_EXEC \
             --create "/factorio/saves/${FACTORIO_SAVE_NAME}.zip" \
             --map-gen-settings /factorio/config/map-gen-settings.json \
             --map-settings /factorio/config/map-settings.json
@@ -124,8 +174,8 @@ start_factorio() {
     export CONFIG=/factorio/config
     export MODS=/factorio/mods
 
-    # Use base image's factorio execution method with proper emulation
-    /bin/box64 /opt/factorio/bin/x64/factorio \
+    # FIXED: Use architecture-aware execution
+    $FACTORIO_EXEC \
         --port $FACTORIO_PORT \
         --server-settings /factorio/config/server-settings.json \
         --rcon-port $FACTORIO_RCON_PORT \
