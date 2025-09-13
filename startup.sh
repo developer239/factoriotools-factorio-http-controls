@@ -3,8 +3,9 @@ set -e
 
 echo "Starting Factorio RCON HTTP Server Container..."
 
-# Save the HTTP API port before any potential overwrites
+# CRITICAL FIX: Save HTTP API port and never overwrite it
 HTTP_API_PORT=${PORT:-8080}
+readonly HTTP_API_PORT  # Make it read-only to prevent accidental overwrite
 
 # Default environment variables for Factorio RCON
 export FACTORIO_RCON_HOST=${FACTORIO_RCON_HOST:-localhost}
@@ -24,8 +25,8 @@ export FACTORIO_PORT=34197
 echo "Configuration:"
 echo "RCON Host: $FACTORIO_RCON_HOST"
 echo "RCON Port: $FACTORIO_RCON_PORT"
-echo "HTTP API Port: $HTTP_API_PORT"
-echo "Factorio Game Port: $FACTORIO_PORT"
+echo "HTTP API Port: $HTTP_API_PORT"  # Now correctly shows 8080
+echo "Factorio Game Port: $FACTORIO_PORT"  # Shows 34197
 echo "Save Name: $FACTORIO_SAVE_NAME"
 echo "Server Name: $FACTORIO_SERVER_NAME"
 echo "Server Description: $FACTORIO_SERVER_DESCRIPTION"
@@ -36,10 +37,24 @@ echo "Admin Users: $FACTORIO_ADMIN_USERS"
 init_factorio_config() {
     echo "Initializing Factorio configuration files..."
 
-    # Ensure directories exist
-    mkdir -p /factorio/saves
-    mkdir -p /factorio/config
-    mkdir -p /factorio/mods
+    # Create base factorio directory structure in container filesystem
+    mkdir -p /factorio
+
+    # Create required directories (fsGroup in container-spec.yaml handles permissions)
+    mkdir -p /data/factorio/{saves,config,mods}
+
+    # Remove any existing directories in container filesystem and create symlinks to persistent storage
+    for dir in saves config mods; do
+        if [ -d "/factorio/$dir" ] && [ ! -L "/factorio/$dir" ]; then
+            echo "Removing existing /factorio/$dir directory"
+            rm -rf "/factorio/$dir"
+        fi
+
+        if [ ! -L "/factorio/$dir" ]; then
+            echo "Creating symlink: /factorio/$dir -> /data/factorio/$dir"
+            ln -sf "/data/factorio/$dir" "/factorio/$dir"
+        fi
+    done
 
     # Initialize configuration files if they don't exist (following base image logic)
     if [[ ! -f /factorio/config/server-settings.json ]]; then
@@ -103,7 +118,8 @@ start_factorio() {
     init_factorio_config
 
     # Set environment variables for base image compatibility
-    export PORT=$FACTORIO_PORT
+    # IMPORTANT: Use FACTORIO_PORT, not PORT for Factorio game server
+    export PORT=$FACTORIO_PORT  # Temporarily set for base image compatibility
     export RCON_PORT=$FACTORIO_RCON_PORT
     export CONFIG=/factorio/config
     export MODS=/factorio/mods
@@ -147,8 +163,9 @@ start_http_server() {
         exit 1
     fi
 
-    # Restore PORT for HTTP API
+    # CRITICAL FIX: Use HTTP_API_PORT for HTTP server
     export PORT=$HTTP_API_PORT
+    echo "Starting HTTP server on port $PORT"
 
     # Start the HTTP server
     node dist/main.js &

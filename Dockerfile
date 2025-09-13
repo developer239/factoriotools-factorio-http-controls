@@ -1,6 +1,6 @@
 # Multi-stage build for NestJS RCON Server + Factorio
-# Build argument for Factorio version (defaults to 1.1.110)
-ARG FACTORIO_VERSION=1.1.110
+# Build argument for Factorio version (defaults to 2.0.55)
+ARG FACTORIO_VERSION=2.0.55
 
 # Stage 1: Build the NestJS application
 FROM node:20-alpine AS builder

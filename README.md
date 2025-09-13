@@ -9,17 +9,17 @@ Docker container with Factorio server and NestJS HTTP API for RCON management.
 Build the Docker image with default Factorio version (2.0.55):
 
 ```bash
-docker build --platform linux/amd64 -t factorio-with-http-controls .
+docker build --platform linux/amd64 -t jarnotmichal/factorio-with-http-controls:2.0.55-3 .
 ```
 
 **Build with specific Factorio version:**
 
 ```bash
 # Build with Factorio 1.1.110
-docker build --platform linux/amd64 --build-arg FACTORIO_VERSION=1.1.110 -t factorio-with-http-controls .
+docker build --platform linux/amd64 --build-arg FACTORIO_VERSION=1.1.110 -t jarnotmichal/factorio-with-http-controls:1.1.110-3 .
 
 # Build with Factorio 1.1.109
-docker build --platform linux/amd64 --build-arg FACTORIO_VERSION=1.1.109 -t factorio-with-http-controls .
+docker build --platform linux/amd64 --build-arg FACTORIO_VERSION=1.1.109 -t jarnotmichal/factorio-with-http-controls:1.1.109-3 .
 ```
 
 **Note:** The `--platform linux/amd64` flag ensures the image is built for x86_64 architecture, making it compatible with most cloud platforms (GCP, AWS, Azure) even when building on Apple Silicon Macs.
@@ -44,8 +44,8 @@ docker run -d \
   --env-file .env \
   -p 34197:34197/udp \
   -p 8080:8080 \
-  -v factorio-saves:/factorio/saves \
-  factorio-with-http-controls
+  -v factorio-saves:/data/factorio \
+  jarnotmichal/factorio-with-http-controls:2.0.55-3
 ```
 
 ## Connecting to the Server
@@ -150,7 +150,7 @@ The `--platform linux/amd64` flag ensures your images work on x86_64 cloud serve
 
 ```bash
 # Build with specific Factorio version
-docker build --platform linux/amd64 --build-arg FACTORIO_VERSION=2.0.55 -t jarnotmichal/factorio-with-http-controls:2.0.55 .
+docker build --platform linux/amd64 --build-arg FACTORIO_VERSION=2.0.55 -t jarnotmichal/factorio-with-http-controls:2.0.55-3 .
 
 # Build latest tag (uses default version 2.0.55)
 docker build --platform linux/amd64 -t jarnotmichal/factorio-with-http-controls:latest .
@@ -163,7 +163,7 @@ docker build --platform linux/amd64 -t jarnotmichal/factorio-with-http-controls:
 docker push jarnotmichal/factorio-with-http-controls:latest
 
 # Push specific version
-docker push jarnotmichal/factorio-with-http-controls:2.0.55
+docker push jarnotmichal/factorio-with-http-controls:2.0.55-3
 ```
 
 **3. Once published, others can use your image directly:**
@@ -175,6 +175,6 @@ docker run -d \
   --env-file .env \
   -p 34197:34197/udp \
   -p 8080:8080 \
-  -v factorio-saves:/factorio/saves \
-  jarnotmichal/factorio-with-http-controls:2.0.55
+  -v factorio-saves:/data/factorio \
+  jarnotmichal/factorio-with-http-controls:2.0.55-3
 ```
