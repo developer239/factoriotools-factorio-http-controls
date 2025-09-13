@@ -9,18 +9,20 @@ Docker container with Factorio server and NestJS HTTP API for RCON management.
 Build the Docker image with default Factorio version (2.0.55):
 
 ```bash
-docker build -t factorio-with-http-controls .
+docker build --platform linux/amd64 -t factorio-with-http-controls .
 ```
 
 **Build with specific Factorio version:**
 
 ```bash
 # Build with Factorio 1.1.110
-docker build --build-arg FACTORIO_VERSION=1.1.110 -t factorio-with-http-controls .
+docker build --platform linux/amd64 --build-arg FACTORIO_VERSION=1.1.110 -t factorio-with-http-controls .
 
 # Build with Factorio 1.1.109
-docker build --build-arg FACTORIO_VERSION=1.1.109 -t factorio-with-http-controls .
+docker build --platform linux/amd64 --build-arg FACTORIO_VERSION=1.1.109 -t factorio-with-http-controls .
 ```
+
+**Note:** The `--platform linux/amd64` flag ensures the image is built for x86_64 architecture, making it compatible with most cloud platforms (GCP, AWS, Azure) even when building on Apple Silicon Macs.
 
 **Note:** Check [factoriotools/factorio](https://hub.docker.com/r/factoriotools/factorio/tags) for all available versions.
 
@@ -142,14 +144,16 @@ curl -X POST http://localhost:8080/factorio/upload-save \
 
 ### Publishing to Docker Hub
 
+The `--platform linux/amd64` flag ensures your images work on x86_64 cloud servers (GCP, AWS, Azure) regardless of your build machine architecture.
+
 **1. Build and Tag for Docker Hub:**
 
 ```bash
 # Build with specific Factorio version
-docker build --build-arg FACTORIO_VERSION=2.0.55 -t jarnotmichal/factorio-with-http-controls:2.0.55 .
+docker build --platform linux/amd64 --build-arg FACTORIO_VERSION=2.0.55 -t jarnotmichal/factorio-with-http-controls:2.0.55 .
 
 # Build latest tag (uses default version 2.0.55)
-docker build -t jarnotmichal/factorio-with-http-controls:latest .
+docker build --platform linux/amd64 -t jarnotmichal/factorio-with-http-controls:latest .
 ```
 
 **2. Push to Docker Hub:**
