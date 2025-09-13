@@ -85,6 +85,7 @@ start_factorio() {
     $FACTORIO_EXEC \
         --port $FACTORIO_PORT \
         --server-settings /factorio/config/server-settings.json \
+        --server-adminlist /factorio/config/server-adminlist.json \
         --rcon-port $FACTORIO_RCON_PORT \
         --rcon-password "$FACTORIO_RCON_PASSWORD" \
         --server-id /factorio/config/server-id.json \
